@@ -22,7 +22,8 @@
         "react"
     ],
     "rules": {
-        "@typescript-eslint/explicit-function-return-type": "off"
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "react/jsx-props-no-spreading": "off"
     },
-    "ignorePatterns": ["build","dist","public"]
+    "ignorePatterns": ["build","줌dist","public"]
 }
