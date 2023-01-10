@@ -40,7 +40,7 @@ function Autocomplete() {
     <StyledAutocomplete
       multiple={false}
       options={['test', 'test1', 'test3', 'test4',"test5"]}
-      renderInput={(params) => <TextField {...params} label='Repositories' />}
+      renderInput={(params) =>  <TextField {...params} label='Repositories' />}
       PaperComponent={StyledPaper}
       onChange={(e, value) => {
         const repo = value as string
