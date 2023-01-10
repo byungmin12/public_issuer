@@ -1,12 +1,14 @@
-import React from 'react';
-import Login from './Login'
+import React from 'react'
+import Issuer from './Issuer'
+import GlobalStyle from '../styles/globalStyle'
 
 function App() {
   return (
-    <div className="App">
-     <Login />
+    <div className='App'>
+      <GlobalStyle />
+      <Issuer />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
