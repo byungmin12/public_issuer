@@ -3,6 +3,7 @@ import { Box, styled, Typography } from '@mui/material'
 import Glassmophograph from '../styles/Glassmorphism'
 import Autocomplete from '../components/Autocomplete'
 import Repositories from '../components/Repositories'
+import Issues from '../components/Issues'
 
 const Wrapper = styled(Box)`
   width: 100vw;
@@ -19,7 +20,11 @@ const StyledGlassmophograph = styled(Glassmophograph)`
   padding: 20px;
   width: 80%;
   height: 80%;
+  display: flex;
+  flex-direction: column;
+  gap:12px;
 `
+
 
 
 function Issuer() {
@@ -31,6 +36,7 @@ function Issuer() {
           <Autocomplete />
           <Repositories />
         </Box>
+        <Issues />
       </StyledGlassmophograph>
     </Wrapper>
   )
