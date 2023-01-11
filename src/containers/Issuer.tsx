@@ -1,9 +1,10 @@
 import React from 'react'
 import { Box, styled, Typography } from '@mui/material'
 import Glassmophograph from '../styles/Glassmorphism'
-import Autocomplete from '../components/Autocomplete'
 import Repositories from '../components/Repositories'
 import Issues from '../components/Issues'
+import Autocomplete from '../components/Autocomplete'
+
 
 const Wrapper = styled(Box)`
   width: 100vw;
@@ -22,9 +23,8 @@ const StyledGlassmophograph = styled(Glassmophograph)`
   height: 80%;
   display: flex;
   flex-direction: column;
-  gap:12px;
+  gap: 12px;
 `
-
 
 
 function Issuer() {

@@ -2,6 +2,8 @@ import React from 'react'
 import { Avatar, Box, styled, Typography } from '@mui/material'
 import Chip from './Chip'
 import Glassmophograph from '../styles/Glassmorphism'
+import { IOwner } from '../types/owner'
+import { ILabel } from '../types/label'
 
 
 const Wrapper = styled(Glassmophograph)`
@@ -29,23 +31,29 @@ const Chips = styled(Box)`
   gap:6px;
 `
 
-function IssueCard() {
+interface IIssueCard {
+  repo: string;
+  issueNumber:number;
+  title: string;
+  labels: ILabel[];
+  assignees: IOwner[]
+}
+
+function IssueCard({repo,issueNumber,title,labels,assignees}:IIssueCard) {
   return (
     <Wrapper>
       <Box>
+        <Typography>{repo}</Typography>
         <Typography variant="h5" >
-          #1 Issue
+          {`#${issueNumber} ${title}`}
           <Chips>
             {
-              [1,2,3].map((n)=><Chip text="bug" color="f29513" key={n} />)
+              labels.map((label)=><Chip text="bug" color={`#${label.color}`} key={label.id} />)
             }
           </Chips>
         </Typography>
-        <Typography variant="body1">
-          I&apos;m having a problem with this.
-        </Typography>
       </Box>
-        <Avatar alt="Remy Sharp" src="https://avatars.githubusercontent.com/u/79984280" />
+        <Avatar alt={assignees[0].gravatar_id} src={assignees[0].avatar_url} />
     </Wrapper>
   )
 }
