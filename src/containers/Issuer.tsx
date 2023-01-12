@@ -1,9 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Box, styled, Typography } from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
 import Glassmophograph from '../styles/Glassmorphism'
-import Autocomplete from '../components/Autocomplete'
 import Repositories from '../components/Repositories'
 import Issues from '../components/Issues'
+import Autocomplete from '../components/Autocomplete'
+import useRepositories from '../stores/useUserId'
+
 
 const Wrapper = styled(Box)`
   width: 100vw;
@@ -22,16 +26,45 @@ const StyledGlassmophograph = styled(Glassmophograph)`
   height: 80%;
   display: flex;
   flex-direction: column;
-  gap:12px;
+  gap: 12px;
+`
+
+const UserWrapper = styled(Box)`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  & .MuiSvgIcon-root {
+    cursor: pointer;
+  }
 `
 
 
-
 function Issuer() {
+  const navigate = useNavigate()
+  const userId = useRepositories(state=>state.userId)
+  const handlerUnstoreUserId = useRepositories(state=>state.handlerUnstoreUserId)
+
+
+
+  React.useEffect(() => {
+    if (userId === null) {
+      navigate('/login')
+    }
+  }, [navigate, userId])
+
+  const memoHandlerDeleteUserId = React.useCallback(()=>{
+    handlerUnstoreUserId()
+  },[handlerUnstoreUserId])
+
+
   return (
     <Wrapper>
       <StyledGlassmophograph>
-        <Typography>User name</Typography>
+        <UserWrapper>
+          <Typography>{userId}</Typography>
+          <CloseIcon onClick={memoHandlerDeleteUserId} />
+        </UserWrapper>
         <Box>
           <Autocomplete />
           <Repositories />

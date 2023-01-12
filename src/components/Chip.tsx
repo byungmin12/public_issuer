@@ -15,7 +15,7 @@ const Wrapper = styled(Box)<{backgroundColor: string}>`
 
 function Chip({text,color}:IChip) {
   return (
-    <Wrapper  backgroundColor={`#${color}`} component="span">
+    <Wrapper  backgroundColor={color} component="span">
       {text}
     </Wrapper>
   )
