@@ -5,13 +5,12 @@ import useRepositories from '../stores/useRepositories'
 import { IRepositoryResType } from '../types/repository'
 import useFetch from '../apis/useFetch'
 import octokit from '../apis/octokit'
+import { glassmorphismStr } from '../styles/Glassmorphism'
 
 
 const StyledAutocomplete = styled(MuiAutocomplete<string>)`
+  ${()=>glassmorphismStr({})}
   background: rgba(255, 255, 255, 0.11);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(3.6px);
-  -webkit-backdrop-filter: blur(3.6px);
 
   & .MuiFormControl-root, & .MuiOutlinedInput-notchedOutline, & {
     border-radius: 12px;
