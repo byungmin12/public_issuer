@@ -58,7 +58,7 @@ function Issues() {
 
             return <li key={`${issue.node_id
             }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
-                                                  assignees={issue.assignees} issueNumber={issue.number} /></li>
+                                                  assignees={issue.assignees} issueNumber={issue.number} url={issue.html_url} /></li>
           })
       }
     </Wrapper>
