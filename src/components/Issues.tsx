@@ -45,9 +45,7 @@ function Issues() {
   } = useFetch<IIssue[]>( handlerApi,[selectedRepositories.length])
 
 
-  if(isLoading )return <Wrapper>
-      isLoading...
-    </Wrapper>
+  if(isLoading )return <Wrapper>isLoading...</Wrapper>
   return (
     <Wrapper>
       {
