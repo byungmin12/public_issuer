@@ -50,22 +50,22 @@ function Autocomplete() {
 
   const {
     data: repos,
-    isLoading
-  } = useFetch<IRepositoryResType[]>( handlerApi)
+    isLoading,
+  } = useFetch<IRepositoryResType[]>(handlerApi)
 
 
   const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: unknown) => {
     const repo = value as string
-    if (repo === '') return
+    if (repo === '' || repo === null) return
     handlerStoreRepository(repo)
   }
 
   const filterRepoName = React.useMemo(() => {
-    if (repos === null ) return []
+    if (repos === null) return []
     return repos.data.map((repo) => repo.name)
   }, [repos])
 
-  if(isLoading)return <Skeleton variant="rounded"  height={56} />
+  if (isLoading) return <Skeleton variant='rounded' height={56} />
 
   return (
     <StyledAutocomplete
