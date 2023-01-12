@@ -42,20 +42,19 @@ function Issues() {
   const {
     data: issues,
     isLoading
-  } = useFetch<IIssue[]>('GET /repos/{owner}/{repo}/issues', handlerApi)
+  } = useFetch<IIssue[]>( handlerApi,[selectedRepositories.length])
 
-  if(isLoading === true)return <Wrapper>
+
+  if(isLoading )return <Wrapper>
       isLoading...
     </Wrapper>
-
-
   return (
     <Wrapper>
       {
-        issues?.length === 0 ?
+        issues?.data.length === 0 ?
           '이슈가 없습니다.'
           :
-          issues?.map((issue) => {
+          issues?.data.map((issue) => {
             const repoUrl = issue.repository_url.split('/')
             const repo = repoUrl[repoUrl.length - 1]
 

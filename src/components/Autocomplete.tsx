@@ -51,7 +51,7 @@ function Autocomplete() {
   const {
     data: repos,
     isLoading
-  } = useFetch<IRepositoryResType[]>('GET /users/{username}/repos', handlerApi)
+  } = useFetch<IRepositoryResType[]>( handlerApi)
 
 
   const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: unknown) => {
@@ -61,11 +61,11 @@ function Autocomplete() {
   }
 
   const filterRepoName = React.useMemo(() => {
-    if (repos === undefined) return []
-    return repos.map((repo) => repo.name)
+    if (repos === null ) return []
+    return repos.data.map((repo) => repo.name)
   }, [repos])
 
-  if(isLoading===true)return <Skeleton variant="rounded"  height={56} />
+  if(isLoading)return <Skeleton variant="rounded"  height={56} />
 
   return (
     <StyledAutocomplete
