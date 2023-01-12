@@ -1,87 +1,68 @@
-import { useEffect, useReducer, useRef } from 'react'
+import { useEffect, useReducer } from 'react'
 import { OctokitResponse } from '@octokit/types'
 
 interface State<T> {
-  data?: T
-  isError?: Error
-  isLoading?: boolean
+  data: OctokitResponse<T, number> | null
+  error: Error | null
+  isLoading: boolean
 }
 
-type Cache<T> = Record<string, T>
-
-// discriminated union type
 type Action<T> =
-  | { type: 'loading'; payload: boolean }
-  | { type: 'fetched'; payload: T }
+  | { type: 'loading' }
+  | { type: 'fetched'; payload: OctokitResponse<T, number> }
   | { type: 'error'; payload: Error }
 
-function useFetch<T>(url?: string, api?: () => Promise<OctokitResponse<T, number>>): State<T> {
-  const cache = useRef<Cache<T>>({})
-  const cancelRequest = useRef<boolean>(false)
+function useFetch<T>(api: () => Promise<OctokitResponse<T, number>>,deps: any[] = []): State<T> {
 
   const initialState: State<T> = {
-    isError: undefined,
-    data: undefined,
-    isLoading: false
+    error: null,
+    data: null,
+    isLoading: true,
   }
 
   const fetchReducer = (state: State<T>, action: Action<T>): State<T> => {
     switch (action.type) {
       case 'loading':
-        return { ...initialState, isLoading: action.payload }
+        return {
+          isLoading: true,
+          data: null,
+          error: null,
+        }
       case 'fetched':
-        return { ...initialState, data: action.payload }
+        return {
+          isLoading: false,
+          data: action.payload,
+          error: null,
+        }
       case 'error':
-        return { ...initialState, isError: action.payload }
+        return {
+          isLoading: false,
+          data: null,
+          error: action.payload,
+        }
       default:
-        return state
+        throw new Error(`Unhandled action type`)
     }
   }
 
   const [state, dispatch] = useReducer(fetchReducer, initialState)
 
+  const fetchData = async () => {
+    dispatch({ type: 'loading' })
+    try {
+      const data = await api()
+      dispatch({ type: 'fetched', payload: data })
+    } catch (e) {
+      const error = e as Error
+      dispatch({ type: 'error', payload: error })
+    }
+  }
+
   useEffect(() => {
-    // Do nothing if the url is not given
-    if (url === undefined) return undefined
-    if (api === undefined) return undefined
-
-    cancelRequest.current = false
-
-    const fetchData = async () => {
-      dispatch({ type: 'loading', payload: true })
-
-      if (cache.current[url] !== undefined) {
-        dispatch({ type: 'fetched', payload: cache.current[url] })
-        return
-      }
-
-      try {
-        const response = await api()
-
-        if (response.status >= 300) {
-          throw new Error(`fail ${url} api`)
-        }
-
-        const { data } = response
-        cache.current[url] = data
-        if (cancelRequest.current) return
-
-        dispatch({ type: 'loading', payload: false })
-        dispatch({ type: 'fetched', payload: data })
-      } catch (error) {
-        if (cancelRequest.current) return
-        dispatch({ type: 'error', payload: error as Error })
-      }
-    }
-
-    void fetchData()
-
-    return () => {
-      cancelRequest.current = true
-    }
-
-
-  }, [url, api])
+    // eslint-disable-next-line
+    fetchData()
+    // eslint-disable-next-line
+  }, deps)
 
   return state
 }
