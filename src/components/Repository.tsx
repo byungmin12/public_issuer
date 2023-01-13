@@ -3,9 +3,10 @@ import { styled, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import Glassmophograph from '../styles/Glassmorphism'
 import useRepositories from '../stores/useRepositories'
+import { IRepositoryResType } from '../types/repository'
 
 interface IRepository {
-  title: string
+  repo:  IRepositoryResType
 }
 
 const Wrapper = styled(Glassmophograph)`
@@ -29,18 +30,17 @@ const Wrapper = styled(Glassmophograph)`
 
 `
 
-const  Repository = React.memo(({ title }: IRepository) => {
+const  Repository = React.memo(({ repo }: IRepository) => {
   const handlerUnstoreRepository = useRepositories(state => state.handlerUnstoreRepositories)
-
   return (
     <Wrapper>
       <Typography onClick={()=>{
         console.log("filter")
       }}>
-        {title}
+        {repo.name}
       </Typography>
       <CloseIcon onClick={() => {
-        handlerUnstoreRepository(title)
+        handlerUnstoreRepository(repo)
       }} />
     </Wrapper>
   )

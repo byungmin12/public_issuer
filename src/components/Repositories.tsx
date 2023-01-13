@@ -19,8 +19,8 @@ function Repositories() {
     <Wrapper>
       {
         selectedRepositories.map((repo) =>
-          <li key={repo}>
-            <Repository title={repo} />
+          <li key={repo.id}>
+            <Repository  repo={repo} />
           </li>,
         )
       }

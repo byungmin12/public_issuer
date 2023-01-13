@@ -25,8 +25,8 @@ function Issues() {
   const handlerApi = useCallback(
     async () => {
       const promiseData = await Promise.allSettled(selectedRepositories.map((repo)=>octokit.request('GET /repos/{owner}/{repo}/issues', {
-        owner: 'byungmin12',
-        repo,
+        owner: repo.owner.login,
+        repo: repo.name,
       })))
 
       const isFulfilled = <T,>(p:PromiseSettledResult<T>): p is PromiseFulfilledResult<T> => p.status === 'fulfilled';
@@ -44,7 +44,6 @@ function Issues() {
     isLoading
   } = useFetch<IIssue[]>( handlerApi,[selectedRepositories.length])
 
-
   if(isLoading )return <Wrapper>isLoading...</Wrapper>
   return (
     <Wrapper>
@@ -55,10 +54,9 @@ function Issues() {
           issues?.data.map((issue) => {
             const repoUrl = issue.repository_url.split('/')
             const repo = repoUrl[repoUrl.length - 1]
-
             return <li key={`${issue.node_id
             }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
-                                                  assignees={issue.assignees} issueNumber={issue.number} url={issue.html_url} /></li>
+                                                  user={issue.user} issueNumber={issue.number} url={issue.html_url} /></li>
           })
       }
     </Wrapper>

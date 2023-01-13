@@ -1,15 +1,14 @@
-import React, { useCallback } from 'react'
+import React, { useEffect, useState } from 'react'
 import { OctokitResponse } from '@octokit/types'
-import { Autocomplete as MuiAutocomplete, Paper, Skeleton, styled, TextField } from '@mui/material'
+import { Autocomplete as MuiAutocomplete, debounce, Grid, Paper, styled, TextField, Typography } from '@mui/material'
 import useRepositories from '../stores/useRepositories'
 import { IRepositoryResType } from '../types/repository'
-import useFetch from '../apis/useFetch'
 import octokit from '../apis/octokit'
 import { glassmorphismStr } from '../styles/Glassmorphism'
 
 
-const StyledAutocomplete = styled(MuiAutocomplete<string>)`
-  ${()=>glassmorphismStr({})}
+const StyledAutocomplete = styled(MuiAutocomplete<IRepositoryResType>)`
+  ${() => glassmorphismStr({})}
   background: rgba(255, 255, 255, 0.11);
 
   & .MuiFormControl-root, & .MuiOutlinedInput-notchedOutline, & {
@@ -37,44 +36,68 @@ const StyledPaper = styled(Paper)`
 
 
 function Autocomplete() {
+  const [input, setInput] = useState('')
+  const [options, setOptions] = useState<IRepositoryResType[]>([])
+
   const handlerStoreRepository = useRepositories(state => state.handlerStoreRepositories)
-  const localRepositories = useRepositories(state => state.repositories)
 
-  const handlerApi = useCallback(
-    async () => {
-      const res = await octokit.request('GET /users/{username}/repos', { username: 'byungmin12' })
-      return res as unknown as Promise<OctokitResponse<IRepositoryResType[]>>
-    }, [],
-  )
-
-  const {
-    data: repos,
-    isLoading,
-  } = useFetch<IRepositoryResType[]>(handlerApi)
-
-
-  const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: unknown) => {
-    const repo = value as string
-    if (repo === '' || repo === null) return
-    handlerStoreRepository(repo)
+  const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: IRepositoryResType | null) => {
+    if (value === null) return
+    handlerStoreRepository(value)
   }
 
-  const filterRepoName = React.useMemo(() => {
-    if (repos === null) return []
-    return repos.data.map((repo) => repo.name)
-  }, [repos])
+  const updateInput = React.useMemo(
+    () =>
+      debounce(
+        async (
+          request: { input: string },
+        ) => {
+          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q}', { q: request.input })
+          setOptions(data.data.items)
+        },
+        400,
+      ),
+    [],
+  )
 
-  if (isLoading) return <Skeleton variant='rounded' height={56} />
+
+  useEffect(() => {
+    if (input === '') return
+    // eslint-disable-next-line
+    updateInput({ input })
+// eslint-disable-next-line
+  }, [input])
 
   return (
     <StyledAutocomplete
-      options={filterRepoName}
-      renderInput={(params) => <TextField {...params} label='Repositories' />}
+      options={options}
+
       PaperComponent={StyledPaper}
+      getOptionLabel={(option) => option.name}
+      // onChange={updateInput}
+      onInputChange={(e, value) => {
+        setInput(value)
+      }}
       onChange={handlerChangeOptions}
-      filterOptions={(filterOptions) =>
-        filterOptions.filter((option) => !localRepositories.includes(option))
-      }
+      renderInput={(params) => <TextField
+        {...params}
+        label='Search Repositories'
+        InputProps={{
+          ...params.InputProps,
+          endAdornment: (
+            <div>
+              {params.InputProps.endAdornment}
+            </div>
+          ),
+        }}
+      />}
+      renderOption={(props, option) => <li key={`${option.id}`} {...props}>
+        <Grid container alignItems='center'>
+          <Typography variant='body2' color='text.secondary'>
+            {option.name}
+          </Typography>
+        </Grid>
+      </li>}
       fullWidth
       disablePortal
     />

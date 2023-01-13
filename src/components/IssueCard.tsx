@@ -39,11 +39,11 @@ interface IIssueCard {
   issueNumber: number;
   title: string;
   labels: ILabel[];
-  assignees: IOwner[]
+  user: IOwner
   url: string
 }
 
-function IssueCard({ repo, issueNumber, title, labels, assignees, url }: IIssueCard) {
+function IssueCard({ repo, issueNumber, title, labels, user, url }: IIssueCard) {
   return (
     <Wrapper href={url} target="_blank">
       <Box>
@@ -57,7 +57,7 @@ function IssueCard({ repo, issueNumber, title, labels, assignees, url }: IIssueC
           </Chips>
         </Typography>
       </Box>
-      <Avatar alt={assignees[0].gravatar_id} src={assignees[0].avatar_url} />
+      <Avatar alt={user.login} src={user.avatar_url} />
     </Wrapper>
   )
 }
