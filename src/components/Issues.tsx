@@ -2,10 +2,10 @@ import React, { useCallback } from 'react'
 import { OctokitResponse } from '@octokit/types'
 import { styled } from '@mui/material'
 import IssueCard from './IssueCard'
-import useRepositories from '../stores/useRepositories'
 import { IIssue } from '../types/issue'
 import octokit from '../apis/octokit'
 import useFetch from '../apis/useFetch'
+import useSelectedRepository from '../stores/useSelectRepository'
 
 const Wrapper = styled('ul')`
   height: inherit;
@@ -20,31 +20,30 @@ const Wrapper = styled('ul')`
 
 
 function Issues() {
-  const selectedRepositories = useRepositories(state => state.repositories)
+  const selectedRepository = useSelectedRepository(state => state.selectedRepo)
+
 
   const handlerApi = useCallback(
     async () => {
-      const promiseData = await Promise.allSettled(selectedRepositories.map((repo)=>octokit.request('GET /repos/{owner}/{repo}/issues', {
-        owner: repo.owner.login,
-        repo: repo.name,
-      })))
-
-      const isFulfilled = <T,>(p:PromiseSettledResult<T>): p is PromiseFulfilledResult<T> => p.status === 'fulfilled';
-
-      const successData = promiseData.filter(isFulfilled).map(p => p.value.data).flat()
-
-      return {
-        data: successData,
-      } as unknown as Promise<OctokitResponse<IIssue[]>>
-    }, [selectedRepositories],
+      if(selectedRepository === undefined){
+        return {data : []} as unknown as OctokitResponse<IIssue[], number>
+      }
+      return await octokit.request('GET /repos/{owner}/{repo}/issues', {
+        owner: selectedRepository.owner.login,
+        repo: selectedRepository.name,
+      })as unknown as OctokitResponse<IIssue[], number>
+    }, [selectedRepository],
   )
 
   const {
     data: issues,
-    isLoading
-  } = useFetch<IIssue[]>( handlerApi,[selectedRepositories.length])
+    isLoading,
+  } = useFetch<IIssue[]>(handlerApi, [selectedRepository])
 
-  if(isLoading )return <Wrapper>isLoading...</Wrapper>
+  if (selectedRepository === undefined) return <Wrapper>저장된 Repository 중 하나를 선택해주세요</Wrapper>
+
+  if (isLoading) return <Wrapper>isLoading...</Wrapper>
+
   return (
     <Wrapper>
       {
@@ -56,7 +55,8 @@ function Issues() {
             const repo = repoUrl[repoUrl.length - 1]
             return <li key={`${issue.node_id
             }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
-                                                  user={issue.user} issueNumber={issue.number} url={issue.html_url} /></li>
+                                                  user={issue.user} issueNumber={issue.number} url={issue.html_url} />
+            </li>
           })
       }
     </Wrapper>
