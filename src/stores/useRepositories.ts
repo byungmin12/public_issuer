@@ -19,7 +19,7 @@ const useRepositories = create<ILocalRepositories>()(
         set({ repositories: get().repositories.length === 0 ? [repo] : [repo, ...get().repositories.slice(0, 3)] })
       },
       handlerUnstoreRepositories: (deleteRepo: IRepositoryResType) => {
-        set({ repositories: get().repositories.filter((repo) => repo !== deleteRepo) })
+        set({ repositories: get().repositories.filter((repo) => repo.full_name !== deleteRepo.full_name) })
       },
     }),
     {
