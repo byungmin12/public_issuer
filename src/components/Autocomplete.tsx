@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { OctokitResponse } from '@octokit/types'
-import { Autocomplete as MuiAutocomplete, debounce, Grid, Paper, styled, TextField, Typography } from '@mui/material'
+import {
+  Autocomplete as MuiAutocomplete,
+  CircularProgress,
+  debounce,
+  Grid,
+  Paper,
+  styled,
+  TextField,
+  Typography,
+} from '@mui/material'
 import useRepositories from '../stores/useRepositories'
 import { IRepositoryResType } from '../types/repository'
 import octokit from '../apis/octokit'
@@ -34,10 +43,10 @@ const StyledPaper = styled(Paper)`
   }
 `
 
-
 function Autocomplete() {
   const [input, setInput] = useState('')
   const [options, setOptions] = useState<IRepositoryResType[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const handlerStoreRepository = useRepositories(state => state.handlerStoreRepositories)
 
@@ -52,8 +61,12 @@ function Autocomplete() {
         async (
           request: { input: string },
         ) => {
+          setIsLoading(true)
+
           const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q}', { q: request.input })
           setOptions(data.data.items)
+          setIsLoading(false)
+
         },
         400,
       ),
@@ -65,16 +78,15 @@ function Autocomplete() {
     if (input === '') return
     // eslint-disable-next-line
     updateInput({ input })
-// eslint-disable-next-line
-  }, [input])
+
+  }, [input,updateInput])
 
   return (
     <StyledAutocomplete
       options={options}
-
+      loading={isLoading}
       PaperComponent={StyledPaper}
       getOptionLabel={(option) => option.name}
-      // onChange={updateInput}
       onInputChange={(e, value) => {
         setInput(value)
       }}
@@ -86,15 +98,15 @@ function Autocomplete() {
           ...params.InputProps,
           endAdornment: (
             <div>
-              {params.InputProps.endAdornment}
+              {isLoading ? <CircularProgress color="inherit" size={20} /> : params.InputProps.endAdornment}
             </div>
           ),
         }}
       />}
-      renderOption={(props, option) => <li key={`${option.id}`} {...props}>
+      renderOption={(props, option) => <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
         <Grid container alignItems='center'>
-          <Typography variant='body2' color='text.secondary'>
-            {option.name}
+          <Typography variant='body2' color='text.secondary' >
+            {isLoading ? "Loading..." : option.full_name}
           </Typography>
         </Grid>
       </li>}
