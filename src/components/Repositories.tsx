@@ -13,14 +13,14 @@ const Wrapper = styled('ul')`
 
 
 function Repositories() {
-  const selectedRepositories = useRepositories(state => state.repositories)
+  const searchedRepositories = useRepositories(state => state.repositories)
 
   return (
     <Wrapper>
       {
-        selectedRepositories.map((repo) =>
-          <li key={repo}>
-            <Repository title={repo} />
+        searchedRepositories.map((repo) =>
+          <li key={repo.id}>
+            <Repository  repo={repo} />
           </li>,
         )
       }

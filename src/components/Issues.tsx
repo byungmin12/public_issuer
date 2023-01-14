@@ -1,11 +1,11 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { OctokitResponse } from '@octokit/types'
 import { styled } from '@mui/material'
 import IssueCard from './IssueCard'
-import useRepositories from '../stores/useRepositories'
 import { IIssue } from '../types/issue'
 import octokit from '../apis/octokit'
 import useFetch from '../apis/useFetch'
+import useSelectedRepository from '../stores/useSelectRepository'
 
 const Wrapper = styled('ul')`
   height: inherit;
@@ -20,48 +20,92 @@ const Wrapper = styled('ul')`
 
 
 function Issues() {
-  const selectedRepositories = useRepositories(state => state.repositories)
+  const [issues, setIssues] = useState<IIssue[]>([])
+  const selectedRepository = useSelectedRepository(state => state.selectedRepo)
+  const [pageNumber, setPageNumber] = useState(1)
+  const maxPage = Math.ceil(selectedRepository === undefined ? 1 : selectedRepository.open_issues_count / 30)
+
+  useEffect(()=>{
+    setIssues([])
+  },[selectedRepository])
 
   const handlerApi = useCallback(
     async () => {
-      const promiseData = await Promise.allSettled(selectedRepositories.map((repo)=>octokit.request('GET /repos/{owner}/{repo}/issues', {
-        owner: 'byungmin12',
-        repo,
-      })))
-
-      const isFulfilled = <T,>(p:PromiseSettledResult<T>): p is PromiseFulfilledResult<T> => p.status === 'fulfilled';
-
-      const successData = promiseData.filter(isFulfilled).map(p => p.value.data).flat()
-
-      return {
-        data: successData,
-      } as unknown as Promise<OctokitResponse<IIssue[]>>
-    }, [selectedRepositories],
+      if (selectedRepository === undefined) {
+        return { data: [] } as unknown as OctokitResponse<IIssue[], number>
+      }
+      return await octokit.request('GET /repos/{owner}/{repo}/issues{?page}', {
+        owner: selectedRepository.owner.login,
+        repo: selectedRepository.name,
+        page:pageNumber
+      }) as unknown as OctokitResponse<IIssue[], number>
+    }, [selectedRepository,pageNumber],
   )
 
   const {
-    data: issues,
-    isLoading
-  } = useFetch<IIssue[]>( handlerApi,[selectedRepositories.length])
+    data: resIssues,
+    isLoading,
+  } = useFetch<IIssue[]>(handlerApi, [selectedRepository,pageNumber])
+
+  useEffect(() => {
+    if (resIssues?.data !== undefined) {
+      setIssues((prev) => [...prev, ...resIssues.data])
+    }
+  }, [resIssues])
+
+  const intObserver = useRef<IntersectionObserver | null>(null)
+
+  const lastPostRef = useCallback((_issue:HTMLLIElement) => {
+    if (isLoading) return
+
+    if (intObserver.current !== null) intObserver.current.disconnect()
+
+    intObserver.current = new IntersectionObserver(intersectionIssue => {
+      if (intersectionIssue[0].isIntersecting && pageNumber < maxPage) {
+        setPageNumber(prev => prev + 1)
+      }
+    })
+    if (_issue !== null) intObserver.current.observe(_issue)
+  }, [isLoading,maxPage,pageNumber])
+
+  const MemoIssues = useCallback(
+    () => <>
+      {
+        issues.map((issue,idx) => {
+          const repoUrl = issue.repository_url.split('/')
+          const repo = repoUrl[repoUrl.length - 1]
+
+          if(idx === issues.length -1 ){
+            return <li ref={lastPostRef} key={`${issue.node_id
+            }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
+                                                  user={issue.user} issueNumber={issue.number} url={issue.html_url} />
+            </li>
+          }
+
+          return <li key={`${issue.node_id
+          }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
+                                                user={issue.user} issueNumber={issue.number} url={issue.html_url} />
+          </li>
+        })
+      }
+    </>,
+    [issues, lastPostRef],
+  );
 
 
-  if(isLoading )return <Wrapper>
-      isLoading...
-    </Wrapper>
+  if (selectedRepository === undefined) return <Wrapper>저장된 Repository 중 하나를 선택해주세요</Wrapper>
+
   return (
     <Wrapper>
       {
-        issues?.data.length === 0 ?
+        (!isLoading && issues.length === 0) ?
           '이슈가 없습니다.'
           :
-          issues?.data.map((issue) => {
-            const repoUrl = issue.repository_url.split('/')
-            const repo = repoUrl[repoUrl.length - 1]
-
-            return <li key={`${issue.node_id
-            }-${repo}-${issue.title}`}><IssueCard repo={repo} title={issue.title} labels={issue.labels}
-                                                  assignees={issue.assignees} issueNumber={issue.number} /></li>
-          })
+          <MemoIssues />
+      }
+      {
+        isLoading &&
+        <div>Loading....</div>
       }
     </Wrapper>
   )
