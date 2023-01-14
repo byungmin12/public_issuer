@@ -31,6 +31,10 @@ const StyledAutocomplete = styled(MuiAutocomplete<IRepositoryResType>)`
   & .MuiFormLabel-root, input {
     color: #fff;
   }
+  
+  & .Mui-disabled{
+    color: red !important;
+  }
 `
 
 const StyledPaper = styled(Paper)`
@@ -48,7 +52,7 @@ function Autocomplete() {
   const [options, setOptions] = useState<IRepositoryResType[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const handlerStoreRepository = useRepositories(state => state.handlerStoreRepositories)
+  const { handlerStoreRepositories: handlerStoreRepository , repositories } = useRepositories(state => state)
 
   const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: IRepositoryResType | null) => {
     if (value === null) return
@@ -63,7 +67,7 @@ function Autocomplete() {
         ) => {
           setIsLoading(true)
 
-          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q}', { q: request.input })
+          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q,per_page,page}', { q: request.input,per_page: 300, })
           setOptions(data.data.items)
           setIsLoading(false)
 
@@ -86,14 +90,14 @@ function Autocomplete() {
       options={options}
       loading={isLoading}
       PaperComponent={StyledPaper}
-      getOptionLabel={(option) => option.name}
+      getOptionLabel={(option) => repositories.length >= 4 ? "" :option.name}
       onInputChange={(e, value) => {
         setInput(value)
       }}
       onChange={handlerChangeOptions}
       renderInput={(params) => <TextField
         {...params}
-        label='Search Repositories'
+        label={repositories.length >= 4 ? "Delete Repositories" : 'Search Repositories'}
         InputProps={{
           ...params.InputProps,
           endAdornment: (
@@ -103,13 +107,15 @@ function Autocomplete() {
           ),
         }}
       />}
-      renderOption={(props, option) => <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
-        <Grid container alignItems='center'>
-          <Typography variant='body2' color='text.secondary' >
-            {isLoading ? "Loading..." : option.full_name}
-          </Typography>
-        </Grid>
-      </li>}
+      renderOption={(props, option) =>  <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
+          <Grid container alignItems='center'>
+            <Typography variant='body2' color='text.secondary' >
+              {isLoading ? "Loading..." : option.full_name}
+            </Typography>
+          </Grid>
+        </li>
+      }
+      disabled={repositories.length >= 4 }
       fullWidth
       disablePortal
     />
