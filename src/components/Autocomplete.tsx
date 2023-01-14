@@ -51,6 +51,7 @@ function Autocomplete() {
   const [input, setInput] = useState('')
   const [options, setOptions] = useState<IRepositoryResType[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [cache, setCache] = useState<Record<string, IRepositoryResType[]>>({})
 
   const { handlerStoreRepositories: handlerStoreRepository , repositories } = useRepositories(state => state)
 
@@ -67,9 +68,14 @@ function Autocomplete() {
         ) => {
           setIsLoading(true)
 
-          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q,per_page,page}', { q: request.input,per_page: 300, })
-          setOptions(data.data.items)
-          setIsLoading(false)
+          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q,per_page}', { q: request.input,per_page: 300, })
+
+          if(data.status === 200){
+            setOptions(data.data.items)
+            setCache(prev=>({...prev,[request.input] : data.data.items}))
+            setIsLoading(false)
+          }
+
 
         },
         400,
@@ -80,16 +86,25 @@ function Autocomplete() {
 
   useEffect(() => {
     if (input === '') return
-    // eslint-disable-next-line
-    updateInput({ input })
 
-  }, [input,updateInput])
+    if(cache[input] !== undefined){
+      setOptions(cache[input])
+      setIsLoading(()=>false)
+      return
+    }
+
+      // eslint-disable-next-line
+      updateInput({ input })
+
+  }, [input,updateInput,cache])
 
   return (
     <StyledAutocomplete
       options={options}
       loading={isLoading}
+      loadingText="Loading..."
       PaperComponent={StyledPaper}
+      filterOptions={(x) => x}
       getOptionLabel={(option) => repositories.length >= 4 ? "" :option.name}
       onInputChange={(e, value) => {
         setInput(value)
@@ -110,7 +125,7 @@ function Autocomplete() {
       renderOption={(props, option) =>  <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
           <Grid container alignItems='center'>
             <Typography variant='body2' color='text.secondary' >
-              {isLoading ? "Loading..." : option.full_name}
+              {option.full_name}
             </Typography>
           </Grid>
         </li>
