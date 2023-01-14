@@ -4,7 +4,7 @@ import { styled } from '@mui/material'
 import IssueCard from './IssueCard'
 import { IIssue } from '../types/issue'
 import octokit from '../apis/octokit'
-import useFetch from '../apis/useFetch'
+import useFetch from '../hooks/useFetch'
 import useSelectedRepository from '../stores/useSelectRepository'
 import useInfiniteScroll from '../hooks/useInfiniteScroll'
 
