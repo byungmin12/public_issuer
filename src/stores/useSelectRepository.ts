@@ -15,7 +15,7 @@ const useSelectedRepository = create<ISelectedRepo>()(
     selectedRepo: undefined,
     toggleSelectedRepo: (selectedRepo: IRepositoryResType) => {
       set((state) => {
-        if (state.selectedRepo === undefined || (selectedRepo.name !== state.selectedRepo.name)) {
+        if (state.selectedRepo === undefined || (selectedRepo.full_name !== state.selectedRepo.full_name)) {
           return { selectedRepo }
         }
         return { selectedRepo: undefined }
