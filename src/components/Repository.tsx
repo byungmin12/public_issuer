@@ -44,18 +44,19 @@ const Wrapper = styled(Glassmophograph)<{ selected: boolean }>`
 
 const Repository = React.memo(({ repo, isSelected }: IRepository) => {
   const handlerUnstoreRepository = useRepositories(state => state.handlerUnstoreRepositories)
-  const handlerSelectedRepo = useSelectedRepository((state) => state.toggleSelectedRepo)
+  const handlerSelectRepo = useSelectedRepository((state) => state.handlerSelectRepo)
+  const handlerDeleteRepo = useSelectedRepository((state) => state.handlerDeleteRepo)
+
 
   return (
     <Wrapper selected={isSelected}>
       <Typography onClick={() => {
-        handlerSelectedRepo(repo)
-
+        handlerSelectRepo(repo)
       }}>
         {repo.full_name}
       </Typography>
       <CloseIcon onClick={() => {
-        handlerSelectedRepo(repo)
+        handlerDeleteRepo()
         handlerUnstoreRepository(repo)
       }} />
     </Wrapper>
