@@ -1,22 +1,27 @@
 import React from 'react'
 import { Avatar, Box, styled, Typography } from '@mui/material'
 import Chip from './Chip'
-import Glassmophograph from '../styles/Glassmorphism'
+import { glassmorphismStr } from '../styles/Glassmorphism'
+import { IOwner } from '../types/owner'
+import { ILabel } from '../types/label'
 
 
-const Wrapper = styled(Glassmophograph)`
+const Wrapper = styled('a')`
+  ${() => glassmorphismStr({})}
   height: 25%;
   margin-bottom: 24px;
   padding: 24px;
   box-shadow: 0 4px 30px rgb(0 0 0 / 0%);
-  
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   cursor: pointer;
   scale: 0.99;
   transition-duration: 0.5s;
+
+  text-decoration: none;
 
 
   &:hover {
@@ -26,26 +31,33 @@ const Wrapper = styled(Glassmophograph)`
 
 const Chips = styled(Box)`
   display: flex;
-  gap:6px;
+  gap: 6px;
 `
 
-function IssueCard() {
+interface IIssueCard {
+  repo: string;
+  issueNumber: number;
+  title: string;
+  labels: ILabel[];
+  user: IOwner
+  url: string
+}
+
+function IssueCard({ repo, issueNumber, title, labels, user, url }: IIssueCard) {
   return (
-    <Wrapper>
+    <Wrapper href={url} target="_blank">
       <Box>
-        <Typography variant="h5" >
-          #1 Issue
+        <Typography>{repo}</Typography>
+        <Typography variant='h5'>
+          {`#${issueNumber} ${title}`}
           <Chips>
             {
-              [1,2,3].map((n)=><Chip text="bug" color="f29513" key={n} />)
+              labels.map((label) => <Chip text='bug' color={`#${label.color}`} key={label.id} />)
             }
           </Chips>
         </Typography>
-        <Typography variant="body1">
-          I&apos;m having a problem with this.
-        </Typography>
       </Box>
-        <Avatar alt="Remy Sharp" src="https://avatars.githubusercontent.com/u/79984280" />
+      <Avatar alt={user.login} src={user.avatar_url} />
     </Wrapper>
   )
 }
