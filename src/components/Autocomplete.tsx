@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { OctokitResponse } from '@octokit/types'
 import {
   Autocomplete as MuiAutocomplete,
@@ -14,6 +14,7 @@ import useRepositories from '../stores/useRepositories'
 import { IRepositoryResType } from '../types/repository'
 import octokit from '../apis/octokit'
 import { glassmorphismStr } from '../styles/Glassmorphism'
+import useInfiniteScroll from '../hooks/useInfiniteScroll'
 
 
 const StyledAutocomplete = styled(MuiAutocomplete<IRepositoryResType>)`
@@ -31,8 +32,8 @@ const StyledAutocomplete = styled(MuiAutocomplete<IRepositoryResType>)`
   & .MuiFormLabel-root, input {
     color: #fff;
   }
-  
-  & .Mui-disabled{
+
+  & .Mui-disabled {
     color: red !important;
   }
 `
@@ -51,9 +52,9 @@ function Autocomplete() {
   const [input, setInput] = useState('')
   const [options, setOptions] = useState<IRepositoryResType[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [cache, setCache] = useState<Record<string, IRepositoryResType[]>>({})
-
-  const { handlerStoreRepositories: handlerStoreRepository , repositories } = useRepositories(state => state)
+  const [pageNumber, setPageNumber] = useState(1)
+  const prevCountRef = useRef<string>();
+  const { handlerStoreRepositories: handlerStoreRepository, repositories } = useRepositories(state => state)
 
   const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: IRepositoryResType | null) => {
     if (value === null) return
@@ -68,69 +69,89 @@ function Autocomplete() {
         ) => {
           setIsLoading(true)
 
-          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q,per_page}', { q: request.input,per_page: 300, })
+          const data: OctokitResponse<{ total_count: number; items: IRepositoryResType[] }, number> = await octokit.request('GET /search/repositories{?q,per_page,page}', {
+            q: request.input,
+            per_page: 300,
+            page: pageNumber,
+          })
 
-          if(data.status === 200){
-            setOptions(data.data.items)
-            setCache(prev=>({...prev,[request.input] : data.data.items}))
+          if (data.status === 200) {
+            prevCountRef.current = request.input
+            setOptions((prev) => [...prev, ...data.data.items])
+
             setIsLoading(false)
           }
-
 
         },
         400,
       ),
-    [],
+    [pageNumber],
   )
 
+  const { lastPostRef } = useInfiniteScroll<HTMLLIElement>({
+    isLoading, cb: () => {
+      setPageNumber((prev) => prev + 1)
+    }, deps: [],
+  })
 
   useEffect(() => {
     if (input === '') return
-
-    if(cache[input] !== undefined){
-      setOptions(cache[input])
-      setIsLoading(()=>false)
-      return
+    if(prevCountRef.current !== input){
+      setPageNumber(1)
     }
+    // eslint-disable-next-line
+    updateInput({ input })
 
-      // eslint-disable-next-line
-      updateInput({ input })
-
-  }, [input,updateInput,cache])
+  }, [input, updateInput, pageNumber])
 
   return (
     <StyledAutocomplete
       options={options}
       loading={isLoading}
-      loadingText="Loading..."
+      loadingText='Loading...'
       PaperComponent={StyledPaper}
       filterOptions={(x) => x}
-      getOptionLabel={(option) => repositories.length >= 4 ? "" :option.name}
+      getOptionLabel={(option) => repositories.length >= 4 ? '' : option.name}
       onInputChange={(e, value) => {
         setInput(value)
       }}
       onChange={handlerChangeOptions}
       renderInput={(params) => <TextField
         {...params}
-        label={repositories.length >= 4 ? "Delete Repositories" : 'Search Repositories'}
+        label={repositories.length >= 4 ? 'Delete Repositories' : 'Search Repositories'}
         InputProps={{
           ...params.InputProps,
           endAdornment: (
             <div>
-              {isLoading ? <CircularProgress color="inherit" size={20} /> : params.InputProps.endAdornment}
+              {isLoading ? <CircularProgress color='inherit' size={20} /> : params.InputProps.endAdornment}
             </div>
           ),
         }}
       />}
-      renderOption={(props, option) =>  <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
+      renderOption={(props, option) => {
+
+        if (option.html_url === options[options.length - 1].html_url) {
+          return (
+            <li ref={lastPostRef}  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
+              <Grid container alignItems='center'>
+                <Typography variant='body2' color='text.secondary'>
+                  {option.full_name}
+                </Typography>
+              </Grid>
+            </li>
+          )
+        }
+
+        return <li  {...props} key={`${option.id}-${option.full_name}-${option.html_url}`}>
           <Grid container alignItems='center'>
-            <Typography variant='body2' color='text.secondary' >
+            <Typography variant='body2' color='text.secondary'>
               {option.full_name}
             </Typography>
           </Grid>
         </li>
       }
-      disabled={repositories.length >= 4 }
+      }
+      disabled={repositories.length >= 4}
       fullWidth
       disablePortal
     />
