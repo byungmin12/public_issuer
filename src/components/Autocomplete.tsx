@@ -53,7 +53,7 @@ function Autocomplete() {
   const [options, setOptions] = useState<IRepositoryResType[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [pageNumber, setPageNumber] = useState(1)
-  const prevCountRef = useRef<string>();
+  const prevInputRef = useRef<string>();
   const { handlerStoreRepositories: handlerStoreRepository, repositories } = useRepositories(state => state)
 
   const handlerChangeOptions = (e: React.SyntheticEvent<Element, Event>, value: IRepositoryResType | null) => {
@@ -76,7 +76,7 @@ function Autocomplete() {
           })
 
           if (data.status === 200) {
-            prevCountRef.current = request.input
+            prevInputRef.current = request.input
             setOptions((prev) => [...prev, ...data.data.items])
 
             setIsLoading(false)
@@ -96,7 +96,7 @@ function Autocomplete() {
 
   useEffect(() => {
     if (input === '') return
-    if(prevCountRef.current !== input){
+    if(prevInputRef.current !== input){
       setPageNumber(1)
     }
     // eslint-disable-next-line
